@@ -14,9 +14,14 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#define MISO 12
-#define MOSI 13
-#define SCLK 14
+#define SPI_CLOCK_SPEED_HZ 100000
+#define SPI_DUTY_CYCLE_POS 128
 
+#define HMISO 12
+#define HMOSI 13
+#define HSCLK 14
+#define HCS 15
 
+void spi_init(void);
+void spi_read(void);
 #endif
