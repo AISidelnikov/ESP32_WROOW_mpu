@@ -22,6 +22,8 @@
 #define HSCLK 14
 #define HCS 15
 
-void spi_init(void);
-void spi_read(void);
+#define MPU_ARRAY 7
+
+void spi_init(spi_device_interface_config_t *devices_p, spi_device_handle_t *spiHandle);
+esp_err_t  spi_read(unsigned char *array, uint8_t lengthAdrray, spi_device_handle_t *spiHandle_p);
 #endif

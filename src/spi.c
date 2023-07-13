@@ -3,10 +3,8 @@
 static const char *TAG_SPI = "SPI";
 static esp_err_t error;
 
-static spi_device_interface_config_t stm32;
-static spi_device_handle_t  stm32Handle;
 
-void spi_init(void) {
+void spi_init(spi_device_interface_config_t *devices_p, spi_device_handle_t *spiHandle) {
     spi_bus_config_t hbuscfg = {
         .miso_io_num = HMISO,
         .mosi_io_num = HMOSI,
@@ -19,22 +17,31 @@ void spi_init(void) {
     error = spi_bus_initialize(HSPI_HOST, &hbuscfg, SPI_DMA_CH1);
     ESP_LOGI(TAG_SPI, "HSPI init: %d ", error);
 
-    stm32.address_bits = 0;
-    stm32.command_bits = 0;
-    stm32.dummy_bits = 0;
-    stm32.mode = 0;
-    stm32.duty_cycle_pos = SPI_DUTY_CYCLE_POS;
-    stm32.clock_speed_hz = SPI_CLOCK_SPEED_HZ;
-    stm32.spics_io_num = HCS;
-    stm32.queue_size = 1;
-    stm32.pre_cb = NULL;
-    stm32.post_cb = NULL;
-    stm32.flags = SPI_DEVICE_HALFDUPLEX;   
+    devices_p->address_bits = 0;
+    devices_p->command_bits = 0;
+    devices_p->dummy_bits = 0;
+    devices_p->mode = 0;
+    devices_p->duty_cycle_pos = SPI_DUTY_CYCLE_POS;
+    devices_p->clock_speed_hz = SPI_CLOCK_SPEED_HZ;
+    devices_p->spics_io_num = HCS;
+    devices_p->queue_size = 1;
+    devices_p->pre_cb = NULL;
+    devices_p->post_cb = NULL;
+    // stm32.flags = SPI_DEVICE_HALFDUPLEX;   
     
-    error = spi_bus_add_device(HSPI_HOST, &stm32, &stm32Handle);
+    error = spi_bus_add_device(HSPI_HOST, devices_p, spiHandle);
     ESP_LOGI(TAG_SPI,"SPI BUS ADD STM32: %d ", error);
 }
 
-void spi_read(void) {
-    
+esp_err_t  spi_read(unsigned char *array, uint8_t lengthAdrray, spi_device_handle_t *spiHandle_p) {
+    spi_transaction_t trans = {
+        .addr = 0,
+        .cmd = 0,
+        .length = 8*lengthAdrray,
+        .rxlength = 8*lengthAdrray,
+        .rx_buffer = array,
+    };
+    error = spi_device_transmit(*spiHandle_p, &trans);
+    ESP_LOGI(TAG_SPI,"SPI TRANSMIT: %d ", error);
+    return error;
 }
