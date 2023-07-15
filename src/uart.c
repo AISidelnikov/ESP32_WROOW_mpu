@@ -12,7 +12,7 @@ void uart_init(void) {
         .source_clk = UART_SCLK_APB,
     };
 
-    uart_driver_install(UART, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_driver_install(UART, RX_BUF_SIZE, 0, 0, NULL, 0);
     uart_param_config(UART, &uart_cfg);
     uart_set_pin(UART, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 }
@@ -32,10 +32,10 @@ void rx_task(void *arg) {
     esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
     uint8_t *data = (uint8_t*)malloc(RX_BUF_SIZE+1);
     for(;;) {
-        const int rx_bytes = uart_read_bytes(UART, data, RX_BUF_SIZE, 500/portTICK_PERIOD_MS);
+        const int rx_bytes = uart_read_bytes(UART, data, 55, 500/portTICK_PERIOD_MS);
         if(rx_bytes > 0) {
             data[rx_bytes] = 0;
-            ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rx_bytes, data);
+            ESP_LOGI(RX_TASK_TAG, "Read %d bytes: %s", rx_bytes, data);
         }
     }
     free(data);
