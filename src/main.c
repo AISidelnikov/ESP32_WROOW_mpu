@@ -1,18 +1,10 @@
-#include "spi.h"
+#include "uart.h"
 
-static const char *TAG = "MAIN";
-static esp_err_t error;
-static spi_device_interface_config_t stm32;
-static spi_device_handle_t  stm32Handle;
-int mpu[MPU_ARRAY] = {0};
+// static const char *TAG = "MAIN";
+// static esp_err_t error;
 
 void app_main() {
-    spi_init(&stm32, &stm32Handle);
-
-
-    for(;;) {
-        error = spi_read(mpu, MPU_ARRAY, &stm32Handle);
-        ESP_LOGI(TAG,"SPI READ DATA: %d ", error);
-        vTaskDelay(250 / portTICK_PERIOD_MS);
-    }
+    uart_init();
+    xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
+    xTaskCreate(tx_task, "uart_tx_task", 1024*2, NULL, configMAX_PRIORITIES-2, NULL);
 }
