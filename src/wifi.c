@@ -4,6 +4,11 @@ static EventGroupHandle_t wifi_event_group;
 static const char *TAG = "WIFI";
 static int retry_num = 0;
 
+char on_resp[] = "<!DOCTYPE html><html><head><style type=\"text/css\">html {  font-family: Arial;  display: inline-block;  margin: 0px auto;  text-align: center;}h1{  color: #070812;  padding: 2vh;}.button {  display: inline-block;  background-color: #b30000";
+char hello[] = "Hello";
+char off_resp[] = "<!DOCTYPE html><html><head><style type=\"text/css\">html {  font-family: Arial;  display: inline-block;  margin: 0px auto;  text-align: center;}h1{  color: #070812;  padding: 2vh;}.button {  display: inline-block;  background-color: #b30000";
+int led_state = 0;
+
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -68,4 +73,66 @@ void wifi_init(void) {
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(wifi_event_group);
+}
+
+
+esp_err_t send_web_page(httpd_req_t *req)
+{
+    int response;
+    if (led_state == 0)
+        response = httpd_resp_send(req, hello, HTTPD_RESP_USE_STRLEN);
+    else
+        response = httpd_resp_send(req, on_resp, HTTPD_RESP_USE_STRLEN);
+    return response;
+}
+esp_err_t get_req_handler(httpd_req_t *req)
+{
+    return send_web_page(req);
+}
+
+esp_err_t led_on_handler(httpd_req_t *req)
+{
+    gpio_set_level(LED_PIN, 1);
+    led_state = 1;
+    return send_web_page(req);
+}
+
+esp_err_t led_off_handler(httpd_req_t *req)
+{
+    gpio_set_level(LED_PIN, 0);
+    led_state = 0;
+    return send_web_page(req);
+}
+
+httpd_uri_t uri_get = {
+    .uri = "/",
+    .method = HTTP_GET,
+    .handler = get_req_handler,
+    .user_ctx = NULL};
+
+httpd_uri_t uri_on = {
+    .uri = "/led2on",
+    .method = HTTP_GET,
+    .handler = led_on_handler,
+    .user_ctx = NULL};
+
+httpd_uri_t uri_off = {
+    .uri = "/led2off",
+    .method = HTTP_GET,
+    .handler = led_off_handler,
+    .user_ctx = NULL};
+
+httpd_handle_t setup_server(void)
+{
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    httpd_handle_t server = NULL;
+
+    if (httpd_start(&server, &config) == ESP_OK)
+    {
+        httpd_register_uri_handler(server, &uri_get);
+        httpd_register_uri_handler(server, &uri_on);
+        httpd_register_uri_handler(server, &uri_off);
+    }
+
+    return server;
 }
